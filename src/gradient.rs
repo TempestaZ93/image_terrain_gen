@@ -15,7 +15,7 @@ pub enum TerrainKind {
     FlatLand = 4,
     HighLand = 5,
     Mountains = 6,
-    MountainTop,
+    MountainTop = 7,
 }
 
 impl TerrainKind {
