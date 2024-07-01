@@ -9,7 +9,6 @@ use rand::{
     Rng,
 };
 use std::{
-    cmp::min,
     fs::File,
     hash::{DefaultHasher, Hash, Hasher},
     io::BufReader,

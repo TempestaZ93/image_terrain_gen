@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use rand::Rng;
 
 pub const SCALES: [f64; 7] = [1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0];
 pub const WEIGHTS: [f64; 7] = [0.35, 0.2, 0.15, 0.075, 0.075, 0.025, 0.025];
