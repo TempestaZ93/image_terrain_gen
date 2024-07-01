@@ -65,14 +65,14 @@ impl From<usize> for TerrainKind {
 
 #[derive(Clone)]
 pub struct Gradient {
-    pub terrain_limits: Vec<(f64, f64)>,
+    pub terrain_limits: Vec<[f64; 2]>,
     pub terrain_centers: Vec<f64>,
     pub colors: Vec<image::Rgb<u8>>,
 }
 
 #[allow(dead_code, unused)]
 impl Gradient {
-    pub fn new(terrain_limits: Vec<(f64, f64)>, colors: Vec<image::Rgb<u8>>) -> Self {
+    pub fn new(terrain_limits: Vec<[f64; 2]>, colors: Vec<image::Rgb<u8>>) -> Self {
         let terrain_centers = Gradient::calc_centers(&terrain_limits);
         Self {
             terrain_limits,
@@ -95,19 +95,19 @@ impl Gradient {
         let color_before = self.colors[kind_before as usize];
         let color_after = self.colors[kind_after as usize];
 
-        let dist_self = height - self._terrain_center(kind);
+        let dist_self = height - self.terrain_centers[kind as usize];
         let dist_self_abs = dist_self.abs();
-        let dist_before = (height - self._terrain_center(kind_before)).abs();
-        let dist_after = (height - self._terrain_center(kind_after)).abs();
+        let dist_before = (height - self.terrain_centers[kind_before as usize]).abs();
+        let dist_after = (height - self.terrain_centers[kind_after as usize]).abs();
 
         if dist_self < 0.0 {
             // height is closer to before
             let factor_before = dist_self_abs / (dist_before + dist_self_abs);
-            Gradient::_lerp_colors(color_before, factor_before, color)
+            Gradient::_lerp_colors(&color_before, factor_before, &color)
         } else {
             // height is closer to after
             let factor_after = dist_self_abs / (dist_after + dist_self_abs);
-            Gradient::_lerp_colors(color_after, factor_after, color)
+            Gradient::_lerp_colors(&color_after, factor_after, &color)
         }
     }
 
@@ -115,32 +115,65 @@ impl Gradient {
         if let Some(kind) = self
             .terrain_limits
             .iter()
-            .position(|((min, max))| height > *min && height < *max)
+            .position(|([min, max])| height > *min && height < *max)
         {
             Ok(TerrainKind::from(kind))
         } else {
-            println!("{height}");
-            Err(())
+            panic!("Tried to get terrain kind of invalid height: {height}");
         }
     }
 
-    fn _terrain_center(&self, kind: TerrainKind) -> f64 {
-        let (min, max) = self.terrain_limits[kind as usize];
-        (min + max) / 2.0
-    }
-
-    fn _lerp_colors(one: image::Rgb<u8>, factor: f64, other: image::Rgb<u8>) -> image::Rgb<u8> {
+    fn _lerp_colors(one: &image::Rgb<u8>, factor: f64, other: &image::Rgb<u8>) -> image::Rgb<u8> {
         let factor_inverse = 1.0 - factor;
-        let image::Rgb(one_rgb) = one;
-        let image::Rgb(other_rgb) = other;
-        let r = (one_rgb[0] as f64 * factor + other_rgb[0] as f64 * factor_inverse) as u8;
-        let g = (one_rgb[1] as f64 * factor + other_rgb[1] as f64 * factor_inverse) as u8;
-        let b = (one_rgb[2] as f64 * factor + other_rgb[2] as f64 * factor_inverse) as u8;
+        let [r_one, g_one, b_one] = one.0;
+        let [r_other, g_other, b_other] = other.0;
+        let r = (r_one as f64 * factor + r_other as f64 * factor_inverse) as u8;
+        let g = (g_one as f64 * factor + g_other as f64 * factor_inverse) as u8;
+        let b = (b_one as f64 * factor + b_other as f64 * factor_inverse) as u8;
         image::Rgb([r, g, b])
     }
 
-    fn calc_centers(terrain_limits: &Vec<(f64, f64)>) -> Vec<f64> {
-        let terrain_centers = Vec::new();
+    fn calc_centers(terrain_limits: &Vec<[f64; 2]>) -> Vec<f64> {
+        let mut terrain_centers = vec![0.0; TerrainKind::MountainTop as usize + 1];
+
+        terrain_centers[TerrainKind::DeepWater as usize] = terrain_limits
+            [TerrainKind::DeepWater as usize]
+            .iter()
+            .sum::<f64>()
+            / 2.0;
+        terrain_centers[TerrainKind::Water as usize] = terrain_limits[TerrainKind::Water as usize]
+            .iter()
+            .sum::<f64>()
+            / 2.0;
+        terrain_centers[TerrainKind::ShallowWater as usize] = terrain_limits
+            [TerrainKind::ShallowWater as usize]
+            .iter()
+            .sum::<f64>()
+            / 2.0;
+        terrain_centers[TerrainKind::Shore as usize] = terrain_limits[TerrainKind::Shore as usize]
+            .iter()
+            .sum::<f64>()
+            / 2.0;
+        terrain_centers[TerrainKind::FlatLand as usize] = terrain_limits
+            [TerrainKind::FlatLand as usize]
+            .iter()
+            .sum::<f64>()
+            / 2.0;
+        terrain_centers[TerrainKind::HighLand as usize] = terrain_limits
+            [TerrainKind::HighLand as usize]
+            .iter()
+            .sum::<f64>()
+            / 2.0;
+        terrain_centers[TerrainKind::Mountains as usize] = terrain_limits
+            [TerrainKind::Mountains as usize]
+            .iter()
+            .sum::<f64>()
+            / 2.0;
+        terrain_centers[TerrainKind::MountainTop as usize] = terrain_limits
+            [TerrainKind::MountainTop as usize]
+            .iter()
+            .sum::<f64>()
+            / 2.0;
 
         terrain_centers
     }
@@ -148,17 +181,17 @@ impl Gradient {
 
 impl Default for Gradient {
     fn default() -> Self {
-        let mut terrain_limits = vec![(0.0, 0.0); TerrainKind::MountainTop as usize + 1];
+        let mut terrain_limits = vec![[0.0, 0.0]; TerrainKind::MountainTop as usize + 1];
         let mut colors = vec![image::Rgb::<u8>([0, 0, 0]); TerrainKind::MountainTop as usize + 1];
 
-        terrain_limits[TerrainKind::DeepWater as usize] = (0.0, 0.4);
-        terrain_limits[TerrainKind::Water as usize] = (0.4, 0.6);
-        terrain_limits[TerrainKind::ShallowWater as usize] = (0.6, 0.63);
-        terrain_limits[TerrainKind::Shore as usize] = (0.63, 0.64);
-        terrain_limits[TerrainKind::FlatLand as usize] = (0.64, 0.8);
-        terrain_limits[TerrainKind::HighLand as usize] = (0.8, 0.9);
-        terrain_limits[TerrainKind::Mountains as usize] = (0.9, 0.98);
-        terrain_limits[TerrainKind::MountainTop as usize] = (0.98, 1.0);
+        terrain_limits[TerrainKind::DeepWater as usize] = [0.0, 0.4];
+        terrain_limits[TerrainKind::Water as usize] = [0.4, 0.6];
+        terrain_limits[TerrainKind::ShallowWater as usize] = [0.6, 0.63];
+        terrain_limits[TerrainKind::Shore as usize] = [0.63, 0.64];
+        terrain_limits[TerrainKind::FlatLand as usize] = [0.64, 0.8];
+        terrain_limits[TerrainKind::HighLand as usize] = [0.8, 0.9];
+        terrain_limits[TerrainKind::Mountains as usize] = [0.9, 0.98];
+        terrain_limits[TerrainKind::MountainTop as usize] = [0.98, 1.0];
 
         colors[TerrainKind::DeepWater as usize] = image::Rgb([0, 64, 106]);
         colors[TerrainKind::Water as usize] = image::Rgb([0, 117, 119]);
