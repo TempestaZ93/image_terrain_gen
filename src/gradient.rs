@@ -2,20 +2,23 @@ use std::collections::HashMap;
 
 use rand::Rng;
 
-pub const SCALES: [f64; 5] = [2.0, 4.0, 8.0, 16.0, 32.0];
-pub const WEIGHTS: [f64; 5] = [0.5, 0.3, 0.1, 0.05, 0.05];
+pub const SCALES: [f64; 7] = [1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0];
+pub const WEIGHTS: [f64; 7] = [0.35, 0.2, 0.15, 0.075, 0.075, 0.025, 0.025];
 
+///
+/// Levels of terrain representing different heights and associated colors
+///
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum TerrainKind {
     Undefined = -1,
     DeepWater = 0,
-    Water = 1,
-    ShallowWater = 2,
-    Shore = 3,
-    FlatLand = 4,
-    HighLand = 5,
-    Mountains = 6,
-    MountainTop = 7,
+    Water,
+    ShallowWater,
+    Shore,
+    FlatLand,
+    HighLand,
+    Mountains,
+    MountainTop,
 }
 
 impl TerrainKind {
@@ -69,16 +72,6 @@ impl Gradient {
     pub fn get_color(&self, height: f64) -> image::Rgb<u8> {
         let kind = self.get_terrain_kind(height);
         self.colors[&kind]
-    }
-
-    pub fn lerp_noise_color(&self, height: f64, noise_strength: Option<f64>) -> image::Rgb<u8> {
-        // add noise offset to break up even noise
-        let height = height
-            + (rand::thread_rng().gen_range(0..200) as f64 / 10000.0 - 0.001) / 4.0
-                * noise_strength.unwrap_or(1.0);
-        let height = height.clamp(0.0, 1.0);
-
-        self.lerp_color(height)
     }
 
     pub fn lerp_color(&self, height: f64) -> image::Rgb<u8> {
@@ -144,12 +137,12 @@ impl Default for Gradient {
 
         terrain_limits.insert(TerrainKind::DeepWater, (0.0, 0.4));
         terrain_limits.insert(TerrainKind::Water, (0.4, 0.6));
-        terrain_limits.insert(TerrainKind::ShallowWater, (0.6, 0.66));
-        terrain_limits.insert(TerrainKind::Shore, (0.66, 0.67));
-        terrain_limits.insert(TerrainKind::FlatLand, (0.67, 0.8));
+        terrain_limits.insert(TerrainKind::ShallowWater, (0.6, 0.63));
+        terrain_limits.insert(TerrainKind::Shore, (0.63, 0.64));
+        terrain_limits.insert(TerrainKind::FlatLand, (0.64, 0.8));
         terrain_limits.insert(TerrainKind::HighLand, (0.8, 0.9));
-        terrain_limits.insert(TerrainKind::Mountains, (0.9, 0.95));
-        terrain_limits.insert(TerrainKind::MountainTop, (0.95, 1.0));
+        terrain_limits.insert(TerrainKind::Mountains, (0.9, 0.98));
+        terrain_limits.insert(TerrainKind::MountainTop, (0.98, 1.0));
 
         colors.insert(TerrainKind::DeepWater, image::Rgb([0, 64, 106]));
         colors.insert(TerrainKind::Water, image::Rgb([0, 117, 119]));
