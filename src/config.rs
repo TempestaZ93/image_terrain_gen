@@ -9,6 +9,7 @@ const DEFAULT_NOISE_STRENGTH: f64 = 0.25;
 const DEFAULT_HEIGHT_OFFSET: f64 = 0.0;
 const DEFAULT_OUTPUT: &str = "output.png";
 const DEFAULT_DUMP_CONFIG: bool = false;
+const DEFAULT_VERBOSE: bool = false;
 
 /// Program to generate maps and save them as png images.
 #[derive(serde::Serialize, serde::Deserialize, Parser, Clone, Debug)]
@@ -22,11 +23,6 @@ pub struct Config {
     #[serde(skip_deserializing)]
     #[arg(short = 'i', long)]
     pub config_file: Option<String>,
-
-    /// Output path to save image at
-    #[serde(skip_serializing)]
-    #[arg(short, long)]
-    pub dump_config: Option<bool>,
 
     /// Seed to start generating with
     #[arg(short, long)]
@@ -55,6 +51,16 @@ pub struct Config {
     /// Output path to save image at
     #[arg(short, long)]
     pub output_path: Option<String>,
+
+    /// Output path to save image at
+    #[serde(skip_serializing)]
+    #[arg(short, long)]
+    pub dump_config: Option<bool>,
+
+    /// Print information about generation after it is done
+    #[serde(skip_serializing)]
+    #[arg(short, long)]
+    pub verbose: Option<bool>,
 }
 
 fn noise_strength_in_range(s: &str) -> Result<f64, String> {
@@ -128,6 +134,7 @@ impl Config {
             base_height: self.base_height.or(other.base_height.or(None)),
             seed: self.seed.clone().or(other.seed.clone().or(None)),
             thread_count: self.thread_count.or(other.thread_count.or(None)),
+            verbose: self.verbose.or(other.verbose.or(None)),
             output_path: self
                 .output_path
                 .clone()
@@ -155,6 +162,7 @@ impl Config {
             seed: self.seed.clone().or(other.seed.clone().or(Some(
                 Alphanumeric.sample_string(&mut rand::thread_rng(), 32),
             ))),
+            verbose: self.verbose.or(other.verbose.or(Some(DEFAULT_VERBOSE))),
             thread_count: self
                 .thread_count
                 .or(other.thread_count.or(Some(num_cpus::get() - 1))),

@@ -3,13 +3,7 @@ use super::gradient::*;
 
 use noise::{NoiseFn, Perlin};
 use rand::Rng;
-use std::{
-    hash::{DefaultHasher, Hash, Hasher},
-    ops::DerefMut,
-    sync::{Arc, Mutex},
-    thread::sleep,
-    time::Duration,
-};
+use std::hash::{DefaultHasher, Hash, Hasher};
 
 pub struct Generator<'a> {
     config: &'a Config,
@@ -74,10 +68,14 @@ fn job(
     config: Config,
 ) {
     let width = config.width.unwrap() as usize;
+    let base_height = config.base_height.unwrap();
+    let noise_strength = config.noise_strength.unwrap();
+
     for idx in 0..std::cmp::min(image.len() / 3, amount) {
         let x = (start + idx) % width;
         let y = (start + idx) / width;
         let mut value: f64 = 0.0;
+
         for layer_idx in 0..SCALES.len() {
             let step = steps[layer_idx];
             let x = step * x as f64;
@@ -87,21 +85,20 @@ fn job(
 
         value += 0.5;
 
-        let base_height = config.base_height.unwrap();
-        let noise_value = rand::thread_rng().gen_range(0..100) as f64 / 10000.0;
+        let noise_value = rand::thread_rng().gen_range(0..1000) as f64 / 100000.0;
 
         // map value to be inside valid range
         value = base_height
             + value * (1.0 - base_height)
             // and apply noise
-            + noise_value * config.noise_strength.unwrap();
+            + noise_value * noise_strength;
 
         // limit values to be within range
         value = value.clamp(0.0000001, 0.99999999);
 
-        let color = gradient.lerp_color(value).0;
-        image[idx * 3] = color[0];
-        image[idx * 3 + 1] = color[1];
-        image[idx * 3 + 2] = color[2];
+        let [r, g, b] = gradient.lerp_color(value).0;
+        image[idx * 3] = r;
+        image[idx * 3 + 1] = g;
+        image[idx * 3 + 2] = b;
     }
 }
