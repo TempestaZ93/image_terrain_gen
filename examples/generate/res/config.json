@@ -1,0 +1,11 @@
+{
+    "seed": "SomeRandomStringOrWhateverYouWant",
+    "width": 1920,
+    "height": 1080,
+    "noise_strength": 0.25,
+    "base_level": 0.0,
+    "output_path": "output.png",
+    "thread_count": 5,
+    "dump_config": false,
+    "verbose": false
+}
