@@ -19,47 +19,47 @@ const DEFAULT_VERBOSE: bool = false;
     long_about = None,
 )]
 pub struct Config {
+    /// Seed to start generating with
+    #[arg(long)]
+    pub seed: Option<String>,
+
+    /// Width of image
+    #[arg(long, value_parser= clap::value_parser!(u32).range(1..))]
+    pub width: Option<u32>,
+
+    /// Height of image
+    #[arg(long, value_parser= clap::value_parser!(u32).range(1..))]
+    pub height: Option<u32>,
+
+    /// Strength of white noise applied to Perlin noise
+    #[arg(long, value_parser= noise_strength_in_range)]
+    pub noise_strength: Option<f64>,
+
+    /// Base height at which to start while generating
+    #[arg(long, value_parser= base_height_in_range)]
+    pub base_level: Option<f64>,
+
     /// Path to configuration JSON file
     #[serde(skip_deserializing)]
     #[arg(short = 'i', long)]
     pub config_file: Option<String>,
 
-    /// Seed to start generating with
+    /// Output path to save image at
     #[arg(short, long)]
-    pub seed: Option<String>,
-
-    /// Width of image
-    #[arg(short, long, value_parser= clap::value_parser!(u32).range(1..))]
-    pub width: Option<u32>,
-
-    /// Height of image
-    #[arg(short, long, value_parser= clap::value_parser!(u32).range(1..))]
-    pub height: Option<u32>,
-
-    /// Strength of white noise applied to Perlin noise
-    #[arg(short, long, value_parser= noise_strength_in_range)]
-    pub noise_strength: Option<f64>,
-
-    /// Base height at which to start while generating
-    #[arg(short, long, value_parser= base_height_in_range)]
-    pub base_height: Option<f64>,
+    pub output_path: Option<String>,
 
     /// Number of threads created to generate image
     #[arg(short='j', long, value_parser= thread_count_in_range)]
     pub thread_count: Option<usize>,
 
     /// Output path to save image at
-    #[arg(short, long)]
-    pub output_path: Option<String>,
-
-    /// Output path to save image at
     #[serde(skip_serializing)]
-    #[arg(short, long)]
+    #[arg(short, long, action=clap::ArgAction::SetTrue)]
     pub dump_config: Option<bool>,
 
     /// Print information about generation after it is done
     #[serde(skip_serializing)]
-    #[arg(short, long)]
+    #[arg(short, long, action=clap::ArgAction::SetTrue)]
     pub verbose: Option<bool>,
 }
 
@@ -131,7 +131,7 @@ impl Config {
             width: self.width.or(other.width.or(None)),
             height: self.height.or(other.height.or(None)),
             noise_strength: self.noise_strength.or(other.noise_strength.or(None)),
-            base_height: self.base_height.or(other.base_height.or(None)),
+            base_level: self.base_level.or(other.base_level.or(None)),
             seed: self.seed.clone().or(other.seed.clone().or(None)),
             thread_count: self.thread_count.or(other.thread_count.or(None)),
             verbose: self.verbose.or(other.verbose.or(None)),
@@ -156,9 +156,9 @@ impl Config {
             noise_strength: self
                 .noise_strength
                 .or(other.noise_strength.or(Some(DEFAULT_NOISE_STRENGTH))),
-            base_height: self
-                .base_height
-                .or(other.base_height.or(Some(DEFAULT_HEIGHT_OFFSET))),
+            base_level: self
+                .base_level
+                .or(other.base_level.or(Some(DEFAULT_HEIGHT_OFFSET))),
             seed: self.seed.clone().or(other.seed.clone().or(Some(
                 Alphanumeric.sample_string(&mut rand::thread_rng(), 32),
             ))),
