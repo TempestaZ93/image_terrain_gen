@@ -22,7 +22,7 @@ fn main() -> Result<(), std::io::Error> {
     let output_path = config.output_path.as_ref().unwrap();
     let verbose = config.verbose.unwrap();
 
-    let mut image_data: Vec<u8> = vec![0; (width * height * 3) as usize];
+    let mut image: Vec<u8> = vec![0; (width * height * 3) as usize];
 
     if verbose {
         println!("Generating...");
@@ -30,18 +30,17 @@ fn main() -> Result<(), std::io::Error> {
 
     let mut hasher = SeedHasher::new();
     config.seed.unwrap().hash(&mut hasher);
-    let seed = hasher.finish();
-    println!("{seed}");
 
     let start = Instant::now();
     generator::generate(
+        &mut image,
         hasher.finish(),
         config.width.unwrap(),
         config.height.unwrap(),
         config.base_level.unwrap(),
         config.noise_strength.unwrap(),
-        config.thread_count,
-        &mut image_data,
+        None,
+        None,
     );
     let end = Instant::now();
     let duration = end - start;
@@ -66,7 +65,7 @@ fn main() -> Result<(), std::io::Error> {
     }
 
     let image: ImageBuffer<Rgb<u8>, Vec<u8>> =
-        match ImageBuffer::from_vec(config.width.unwrap(), config.height.unwrap(), image_data) {
+        match ImageBuffer::from_vec(config.width.unwrap(), config.height.unwrap(), image) {
             Some(image) => image,
             None => panic!("Could not create image from vector data!"),
         };

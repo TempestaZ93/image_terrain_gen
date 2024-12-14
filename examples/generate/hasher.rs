@@ -21,7 +21,7 @@ impl Hasher for SeedHasher {
 
     fn write(&mut self, bytes: &[u8]) {
         for b in bytes {
-            self.hash = (self.hash ^ *b as u64) * self.p;
+            self.hash = (self.hash ^ *b as u64).wrapping_mul(self.p);
         }
     }
 }
